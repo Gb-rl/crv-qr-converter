@@ -36,7 +36,6 @@
     <div class="row" style="margin-bottom:12px">
       <input id="code" type="text" placeholder="Type your alphanumeric code (e.g., ABC123)" autofocus autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="done" />
       <button id="gen">Generate QR</button>
-      <button id="full" class="secondary" title="Fullscreen the QR">Full screen</button>
       <button id="clear" class="secondary" title="Clear and reset">Clear</button>
     </div>
     <div class="hint">Only letters, numbers, spaces, - _ . are kept. Everything else is removed.</div>
@@ -47,16 +46,14 @@
     <div class="hint">Tip: Add <code>?code=ABC123</code> to the URL to auto-generate on load.</div>
   </div>
 
-  <!-- qrcode.js (MIT) inlined -->
-  <script>/* QRCode library as before */</script>
+  <!-- qrcode.js (MIT) from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <script>
     const input = document.getElementById('code');
     const btn = document.getElementById('gen');
-    const btnFull = document.getElementById('full');
     const btnClear = document.getElementById('clear');
     const err = document.getElementById('err');
-    const qrWrap = document.getElementById('qrContainer');
     const qrel = document.getElementById('qrcode');
     const mainCard = document.getElementById('mainCard');
     let qr;
@@ -83,11 +80,6 @@
       }
       err.hidden = true; renderQR(clean);
     }
-
-    btnFull.addEventListener('click', async () => {
-      if(!document.fullscreenElement){ await qrWrap.requestFullscreen().catch(()=>{}); }
-      else { await document.exitFullscreen().catch(()=>{}); }
-    });
 
     btn.addEventListener('click', handleGenerate);
     btnClear.addEventListener('click', () => { input.value = ''; qrel.innerHTML=''; err.hidden=true; if(timeoutId){ clearTimeout(timeoutId); }});
