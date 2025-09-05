@@ -34,11 +34,10 @@
     <div class="header">Caravan Gift Card Tool</div>
     <div class="description">
       Enter the <strong>alphanumerical code</strong> displayed on the GiftPro voucher, then scan the QR with the Toast device.<br>
-      The code will <strong>disappear after 30 seconds</strong>, so have the Toast device ready to scan.<br>
-      A physical code will look like <code>A1B234C5DEFG</code> or similar.
+      The code will <strong>disappear after 30 seconds</strong>, so have the Toast device ready to scan.
     </div>
     <div class="row" style="margin-bottom:12px">
-      <input id="code" type="text" placeholder="Enter code (letters & numbers only)" autofocus autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="done" />
+      <input id="code" type="text" placeholder="Enter code" autofocus autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="done" />
       <button id="gen">Generate QR</button>
     </div>
     <div class="hint">Only letters and numbers are accepted. No spaces or special characters.</div>
@@ -46,7 +45,7 @@
     <div id="qrContainer" class="qr-wrap">
       <div id="qrcode" aria-live="polite"></div>
     </div>
-    <div class="hint">Tip: Add <code>?code=ABC123</code> to the URL to auto-generate on load.</div>
+   CARAVAN
   </div>
 
   <!-- qrcode.js (MIT) from CDN -->
