@@ -28,6 +28,10 @@
     #qrcode canvas, #qrcode img { width: min(78vw, 560px) !important; height: auto !important; image-rendering: pixelated; }
     .hint { font-size: 13px; color: #555; margin-top: 8px; }
     .error { color: #c00; margin-top: 8px; font-size: 14px; }
+    .divider { margin: 14px 0; border-top: 1px dashed #ddd; }
+    .filebox { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .filebox input[type=file] { flex:1 1 auto; }
+    .preview { margin-top: 10px; max-height: 200px; object-fit: contain; display:none; }
   </style>
 </head>
 <body>
@@ -38,11 +42,24 @@
       The code will <strong>disappear after 30 seconds</strong>, so have the Toast device ready to scan.<br>
       A physical code will look like <code>A1B234C5DEFG</code> or similar.
     </div>
+
     <div class="row" style="margin-bottom:12px">
       <input id="code" type="text" placeholder="Type your alphanumeric code (e.g., ABC123)" autofocus autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="done" />
       <button id="gen">Generate QR</button>
       <button id="clear" class="secondary" title="Clear and reset">Clear</button>
     </div>
+
+    <div class="divider"></div>
+
+    <div class="description" style="margin-top:8px;">
+      Or <strong>take a photo of the voucher</strong> and we’ll detect the code only (on-device OCR, no upload).
+    </div>
+    <div class="filebox">
+      <input id="voucherImage" type="file" accept="image/*" capture="environment" />
+      <button id="scan" class="secondary">Scan photo</button>
+    </div>
+    <img id="preview" class="preview" alt="Voucher preview" />
+
     <div class="hint">Only letters, numbers, spaces, - _ . are kept. Everything else is removed.</div>
     <div id="err" class="error" hidden></div>
     <div id="qrContainer" class="qr-wrap">
@@ -53,15 +70,18 @@
 
   <!-- qrcode.js (MIT) from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- Tesseract.js (OCR) from CDN. Runs fully in-browser -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <script>
     const input = document.getElementById('code');
     const btn = document.getElementById('gen');
     const btnClear = document.getElementById('clear');
+    const btnScan = document.getElementById('scan');
+    const fileInput = document.getElementById('voucherImage');
+    const preview = document.getElementById('preview');
     const err = document.getElementById('err');
     const qrel = document.getElementById('qrcode');
-    const mainCard = document.getElementById('mainCard');
-    let qr;
     let timeoutId;
 
     function sanitise(raw){
@@ -76,25 +96,59 @@
 
     function renderQR(text){
       qrel.innerHTML = '';
-      qr = new QRCode(qrel, { text, width: 560, height: 560, correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(qrel, { text, width: 560, height: 560, correctLevel: QRCode.CorrectLevel.M });
       if(timeoutId){ clearTimeout(timeoutId); }
-      timeoutId = setTimeout(()=>{
-        resetPage();
-      }, 30000); // 30 seconds
+      timeoutId = setTimeout(()=>{ resetPage(); }, 30000); // 30 seconds
     }
 
     function handleGenerate(){
       const clean = sanitise(input.value);
       input.value = clean;
-      if(!clean){
-        err.hidden = false; err.textContent = 'Please enter an alphanumeric code.'; return;
-      }
+      if(!clean){ err.hidden = false; err.textContent = 'Please enter an alphanumeric code.'; return; }
       err.hidden = true; renderQR(clean);
     }
 
     btn.addEventListener('click', handleGenerate);
     btnClear.addEventListener('click', () => { resetPage(); if(timeoutId){ clearTimeout(timeoutId); }});
     input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ handleGenerate(); }});
+
+    // --- OCR helpers ---
+    function extractCodeCandidates(text){
+      const upper = text.toUpperCase().replace(/[^A-Z0-9\n ]/g, ' ');
+      // Common patterns: long alphanumeric blocks, typically 8-20 chars
+      const re = /\b[A-Z0-9]{8,20}\b/g;
+      const found = upper.match(re) || [];
+      // Heuristic: prefer strings with both letters and digits, longest first
+      const scored = found.map(s => ({ s, score: (/[A-Z]/.test(s)?1:0)+(/[0-9]/.test(s)?1:0), len: s.length }));
+      scored.sort((a,b)=> (b.score - a.score) || (b.len - a.len));
+      return scored.map(x=>x.s);
+    }
+
+    async function ocrAndFill(file){
+      err.hidden = true;
+      const imgURL = URL.createObjectURL(file);
+      preview.src = imgURL; preview.style.display = 'block';
+      try{
+        const { data } = await Tesseract.recognize(imgURL, 'eng', { logger: _m=>{} });
+        const candidates = extractCodeCandidates(data.text || '');
+        if(candidates.length){
+          input.value = candidates[0];
+          handleGenerate();
+        }else{
+          err.hidden = false; err.textContent = 'Could not detect a valid voucher code. Try a clearer photo.';
+        }
+      }catch(e){
+        err.hidden = false; err.textContent = 'Scanning failed. Try again.';
+      }finally{
+        URL.revokeObjectURL(imgURL);
+      }
+    }
+
+    btnScan.addEventListener('click', ()=>{
+      const f = fileInput.files && fileInput.files[0];
+      if(!f){ err.hidden=false; err.textContent='Please choose or take a voucher photo first.'; return; }
+      ocrAndFill(f);
+    });
 
     const params = new URLSearchParams(location.search);
     const fromQuery = params.get('code');
