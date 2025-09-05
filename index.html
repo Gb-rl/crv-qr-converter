@@ -9,7 +9,7 @@
   <meta name="format-detection" content="telephone=no" />
   <!-- Prevent indexing by search engines -->
   <meta name="robots" content="noindex,nofollow" />
-  <title>Caravan Gift Card Converter</title>
+  <title>Caravan Gift Card Toolle>
   <style>
     :root { --gap: 16px; --c-bg: #d1d1d1; --c-accent: #fee906; --c-text: #111; }
     html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
@@ -41,7 +41,6 @@
     <div class="row" style="margin-bottom:12px">
       <input id="code" type="text" placeholder="Type your alphanumeric code (e.g., ABC123)" autofocus autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="done" />
       <button id="gen">Generate QR</button>
-      <button id="clear" class="secondary" title="Clear and reset">Clear</button>
     </div>
     <div class="hint">Only letters, numbers, spaces, - _ . are kept. Everything else is removed.</div>
     <div id="err" class="error" hidden></div>
@@ -57,8 +56,7 @@
   <script>
     const input = document.getElementById('code');
     const btn = document.getElementById('gen');
-    const btnClear = document.getElementById('clear');
-    const err = document.getElementById('err');
+        const err = document.getElementById('err');
     const qrel = document.getElementById('qrcode');
     const mainCard = document.getElementById('mainCard');
     let qr;
@@ -92,8 +90,7 @@
       err.hidden = true; renderQR(clean);
     }
 
-    btn.addEventListener('click', handleGenerate);
-    btnClear.addEventListener('click', () => { resetPage(); if(timeoutId){ clearTimeout(timeoutId); }});
+    btn.addEventListener('click', handleGenerate); if(timeoutId){ clearTimeout(timeoutId); }});
     input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ handleGenerate(); }});
 
     const params = new URLSearchParams(location.search);
